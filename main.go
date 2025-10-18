@@ -7,6 +7,7 @@ import (
 	"os"
 	"sort"
 	"strings"
+	"sync"
 )
 
 const firstLetter = 'а'
@@ -187,36 +188,44 @@ func main() {
 
 	names := string(namesData)
 	nameLines := strings.Split(strings.ReplaceAll(names, "\r\n", "\n"), "\n")
+
+	var wg = sync.WaitGroup{}
+
 	for _, name := range nameLines {
-		cntSpaces := 0
-		for _, c := range name {
-			if c == ' ' {
-				cntSpaces++
+		wg.Add(1)
+		go func(name string) {
+			defer wg.Done()
+			cntSpaces := 0
+			for _, c := range name {
+				if c == ' ' {
+					cntSpaces++
+				}
 			}
-		}
-		outputName := genOutputName(name)
+			outputName := genOutputName(name)
 
-		name = strings.ToLower(strings.ReplaceAll(name, " ", ""))
-		fmt.Println(name)
+			name = strings.ToLower(strings.ReplaceAll(name, " ", ""))
+			fmt.Println(name)
 
-		file, err := os.Create(outputName)
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer file.Close()
+			file, err := os.Create(outputName)
+			if err != nil {
+				log.Fatal(err)
+			}
+			defer file.Close()
 
-		writer := bufio.NewWriter(file)
+			writer := bufio.NewWriter(file)
 
-		name = sortString(name)
-		have := make([]int, numLetters)
-		for _, c := range name {
-			have[getId(c)]++
-		}
-		dfs(root, have, cntSpaces, "", root, writer)
+			name = sortString(name)
+			have := make([]int, numLetters)
+			for _, c := range name {
+				have[getId(c)]++
+			}
+			dfs(root, have, cntSpaces, "", root, writer)
 
-		err = writer.Flush()
-		if err != nil {
-			log.Fatal(err)
-		}
+			err = writer.Flush()
+			if err != nil {
+				log.Fatal(err)
+			}
+		}(name)
 	}
+	wg.Wait()
 }
