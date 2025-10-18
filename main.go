@@ -144,6 +144,11 @@ func dfs(node *Node, have []int, spaces int, cur string, root *Node, writer *buf
 	}
 }
 
+func genOutputName(name string) string {
+	name = strings.ReplaceAll(name, " ", "_")
+	return name
+}
+
 func main() {
 	fmt.Println("Some")
 	filePath := "utf-8.txt"
@@ -183,10 +188,18 @@ func main() {
 	names := string(namesData)
 	nameLines := strings.Split(strings.ReplaceAll(names, "\r\n", "\n"), "\n")
 	for _, name := range nameLines {
+		cntSpaces := 0
+		for _, c := range name {
+			if c == ' ' {
+				cntSpaces++
+			}
+		}
+		outputName := genOutputName(name)
+
 		name = strings.ToLower(strings.ReplaceAll(name, " ", ""))
 		fmt.Println(name)
 
-		file, err := os.Create(name)
+		file, err := os.Create(outputName)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -199,7 +212,7 @@ func main() {
 		for _, c := range name {
 			have[getId(c)]++
 		}
-		dfs(root, have, 1, "", root, writer)
+		dfs(root, have, cntSpaces, "", root, writer)
 
 		err = writer.Flush()
 		if err != nil {
